@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>You'll definitely like this</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sun:#FFD23F; --ink:#1B2CC1; --pink:#FF4F8B; --paper:#FFFDF5; --text:#15163A;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --paper:#15163A; --text:#FFFDF5; --ink:#8F9BFF; }
+}
+:root[data-theme="dark"]{ --paper:#15163A; --text:#FFFDF5; --ink:#8F9BFF; }
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{height:100%;margin:0;background:var(--sun);color:var(--text);
+  font-family:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  display:flex;align-items:center;justify-content:center;padding:20px}
+.card{position:relative;width:100%;max-width:420px;min-height:520px;background:var(--paper);
+  border:4px solid var(--text);border-radius:28px;box-shadow:10px 10px 0 var(--text);
+  padding:36px 28px;display:flex;flex-direction:column;gap:22px;overflow:hidden}
+h1{font-family:'Bagel Fat One','Arial Rounded MT Bold',system-ui,sans-serif;font-weight:400;
+  font-size:clamp(34px,9vw,44px);line-height:1.05;margin:0;color:var(--ink)}
+p{margin:0;font-size:18px;line-height:1.5}
+.round{font-size:15px;font-weight:600;opacity:.75}
+button{font:inherit;font-weight:600;font-size:19px;cursor:pointer;border:3px solid var(--text);
+  background:var(--pink);color:#15163A;border-radius:999px;padding:16px 26px;min-height:56px;
+  box-shadow:4px 4px 0 var(--text);transition:transform .15s}
+button:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--text)}
+button:focus-visible{outline:3px dashed var(--ink);outline-offset:4px}
+.ghost{background:transparent;box-shadow:none;border-width:2px;font-size:16px;min-height:48px}
+.bar{height:22px;border:3px solid var(--text);border-radius:999px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--pink);transition:width .25s}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.grid button{border-radius:12px;padding:0;min-height:78px;font-size:15px;background:var(--sun);box-shadow:none}
+.grid button[aria-pressed="true"]{background:var(--pink)}
+.check{display:flex;align-items:center;gap:14px;font-size:18px;border:3px solid var(--text);border-radius:14px;padding:16px;cursor:pointer}
+.check input{width:28px;height:28px;accent-color:var(--pink)}
+.spacer{flex-grow:1}
+.dodge{position:absolute}
+.small{font-size:14px;opacity:.7}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+</style>
+</head>
+<body>
+<main class="card" id="app" aria-live="polite"></main>
+<script>
+const app = document.getElementById('app');
+let round = 1;
+const ROUNDS = 3;
+const screens = [start, loading, human, squares, finalButton, unlocking];
+let step = 0;
+
+function go(n){ step = n; app.innerHTML=''; screens[n](); }
+function next(){ go(step + 1); }
+function el(html){ const d=document.createElement('div'); d.innerHTML=html; return [...d.children]; }
+function add(html){ el(html).forEach(c=>app.appendChild(c)); }
+function roundLabel(){ if(round>1) add(`<p class="round">Round ${round}. You're so close now.</p>`); }
+
+function start(){
+  roundLabel();
+  add(`<h1>${round===1?"You're going to love this":"Okay, this time for real"}</h1>
+  <p>${round===1?"Something special is waiting for you. It only takes a few seconds.":"The good part is right after this. Promise."}</p>
+  <div class="spacer"></div>
+  <button id="b">Show me</button>`);
+  document.getElementById('b').onclick = next;
+}
+
+function loading(){
+  add(`<h1>Loading your surprise</h1><div class="bar"><i id="f"></i></div><p id="t">0%</p><div class="spacer"></div>`);
+  let v=0; const f=document.getElementById('f'), t=document.getElementById('t');
+  const iv=setInterval(()=>{
+    v+= v<80 ? 9 : (v<99 ? 1 : 0);
+    if(v>99) v=99;
+    f.style.width=v+'%'; t.textContent=v+'%';
+    if(v===99){ clearInterval(iv); setTimeout(()=>{
+      t.textContent="99%. Stuck. It needs a little push.";
+      add(`<button id="b">Push it</button>`);
+      document.getElementById('b').onclick=next;
+    },700); }
+  },180);
+}
+
+function human(){
+  add(`<h1>Quick check</h1><p>Surprises are for humans only.</p>
+  <label class="check"><input type="checkbox" id="c"> I am not a robot</label>
+  <p id="m" class="small"></p><div class="spacer"></div>`);
+  let tries=0; const c=document.getElementById('c'), m=document.getElementById('m');
+  c.onchange=()=>{
+    tries++;
+    if(tries<3){ setTimeout(()=>{c.checked=false; m.textContent= tries===1?"Hmm, that felt a bit robotic. Try again.":"Still suspicious. One more time, with feeling.";},500); }
+    else { m.textContent="Fine. You pass."; setTimeout(next,800); }
+  };
+}
+
+function squares(){
+  add(`<h1>One more check</h1><p>Tap every square that contains the poem you didn't like.</p>
+  <div class="grid" id="g"></div><p id="m" class="small"></p>
+  <button id="b">Verify</button>`);
+  const g=document.getElementById('g');
+  for(let i=0;i<9;i++){ const s=document.createElement('button'); s.textContent='nothing'; s.setAttribute('aria-pressed','false');
+    s.onclick=()=>s.setAttribute('aria-pressed', s.getAttribute('aria-pressed')==='true'?'false':'true'); g.appendChild(s); }
+  let tries=0;
+  document.getElementById('b').onclick=()=>{
+    tries++; const m=document.getElementById('m');
+    if(tries===1){ m.textContent="Every square says nothing. Are you sure you picked them all?"; }
+    else { m.textContent="Correct. It was nothing all along."; setTimeout(next,900); }
+  };
+}
+
+function finalButton(){
+  add(`<h1>Last step</h1><p>Just tap the button to unlock your surprise.</p><div class="spacer"></div>`);
+  const b=document.createElement('button'); b.textContent='Unlock'; app.appendChild(b);
+  let dodges=0;
+  const run=(e)=>{
+    if(dodges>=4) return;
+    e.preventDefault(); dodges++;
+    const r=app.getBoundingClientRect();
+    b.classList.add('dodge');
+    b.style.left=Math.random()*(r.width-b.offsetWidth-20)+10+'px';
+    b.style.top=(140+Math.random()*(r.height-b.offsetHeight-170))+'px';
+    if(dodges===4) b.textContent='Okay, okay, tap me';
+  };
+  b.addEventListener('pointerenter',e=>{ if(e.pointerType==='mouse') run(e); });
+  b.addEventListener('touchstart',run,{passive:false});
+  b.onclick=(e)=>{ if(dodges<4){ run(e); return; } next(); };
+}
+
+function unlocking(){
+  add(`<h1>Unlocking</h1><div class="bar"><i id="f"></i></div><div class="spacer"></div>`);
+  const f=document.getElementById('f'); let v=0;
+  const iv=setInterval(()=>{ v+=12; f.style.width=Math.min(v,100)+'%';
+    if(v>=100){ clearInterval(iv);
+      setTimeout(()=>{ if(round<ROUNDS){ round++; go(0); } else reveal(); },400); }
+  },150);
+}
+
+function reveal(){
+  app.innerHTML='';
+  add(`<h1>You got looped</h1>
+  <p>Three rounds, one fake loading bar, a robot test, nine squares of nothing and a button that ran away. That was the surprise.</p>
+  <p>Maybe the poem wasn't so bad after all. Go back and share it.</p>
+  <div class="spacer"></div>
+  <button id="b" class="ghost">Do it all again</button>`);
+  document.getElementById('b').onclick=()=>{ round=1; go(0); };
+}
+
+go(0);
+</script>
+</body>
+</html>
